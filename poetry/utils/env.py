@@ -920,7 +920,7 @@ class Env(object):
             return str(self.bin_path) if bin_path.exists() else bin
         else:
             # Need to check every suffix configured in PATHEXT when in windows.
-            executable_suffixes = os.environ.get("PATHEXT", ".exe").split(";")
+            executable_suffixes = os.environ.get("PATHEXT", ".exe").split(os.pathsep)
 
             # On Windows, some executables can be in the base path
             # This is especially true when installing Python with
