@@ -915,8 +915,13 @@ class Env(object):
         """
         Return path to the given executable.
         """
-        bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
-        if not bin_path.exists():
+        if not self._is_windows:
+            bin_path = (self._bin_dir / bin).with_suffix("")
+            return str(self.bin_path) if bin_path.exists() else bin
+        else:
+            # Need to check every suffix configured in PATHEXT when in windows.
+            executable_suffixes = os.environ.get("PATHEXT", ".exe").split(";")
+
             # On Windows, some executables can be in the base path
             # This is especially true when installing Python with
             # the official installer, where python.exe will be at
@@ -925,14 +930,12 @@ class Env(object):
             # in normal uses but this happens in the sonnet script
             # that creates a fake virtual environment pointing to
             # a base Python install.
-            if self._is_windows:
-                bin_path = (self._path / bin).with_suffix(".exe")
-                if bin_path.exists():
-                    return str(bin_path)
-
+            for path in (self._bin_dir / bin), (self._path / bin):
+                for suffix in executable_suffixes:
+                    bin_path = path.with_suffix(suffix)
+                    if bin_path.exists():
+                        return str(bin_path)
             return bin
-
-        return str(bin_path)
 
     def __eq__(self, other):  # type: (Env) -> bool
         return other.__class__ == self.__class__ and other.path == self.path
